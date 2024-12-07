@@ -14,10 +14,15 @@
     "react"
   ],
   "rules": {
-    "@typescript-eslint/ban-ts-comment": ["error", {
-      "ts-ignore": "never",
-      "ts-expect-error": "always"
-    }],
+    "@typescript-eslint/ban-ts-comment": [
+      "error",
+      {
+        "ts-ignore": "never",
+        "ts-expect-error": "always",
+        "ts-nocheck": "never",
+        "ts-check": "never"
+      }
+    ],
     "react/no-unescaped-entities": ["error", {
       "forbid": [">", "}"]
     }],

@@ -2,11 +2,11 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { authClient } from "../../lib/client_auth"
-import QRCode from "react-qr-code";
+
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { signIn } from '../../lib/google'
-import QR from "@/app/components/QR";
+
 
 export default function SignUpForm() {
   const [name, setName] = useState("");
