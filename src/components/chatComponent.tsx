@@ -2,67 +2,70 @@
 import io from "socket.io-client";
 import React, { useState, useEffect } from "react";
 import { Socket } from "socket.io-client";
-import axios from "axios";
+
 
 const ChatComponent = () => {
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<
-    { senderId: string; message: string }[]
+    { senderId: string; message: string,status:string }[]
   >([]);
   const [recipientId, setRecipientId] = useState("");
   const [messageInput, setMessageInput] = useState("");
-  const [port, setPort] = useState<string>(); // Default to 8001
+  
   const [isOnline, setIsOnline] = useState<boolean>(true);
 
+  const connectSocket = () => {
+    const newSocket = io("https://chat-app-test-pydh.onrender.com", {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+    
+    // Debug connection events
+    
+    newSocket.on("connect", () => {
+      console.log("Socket connected:", newSocket.id);
+    });
+
+    newSocket.on("connection-confirmed", (data) => {
+      console.log("Connection confirmed:", data);
+    });
+
+    newSocket.on("registration-confirmed", (data) => {
+      console.log("Registration confirmed:", data);
+    });
+
+    // Listen for private messages
+    newSocket.on("private-message", (messageData) => {
+      console.log("Received private message:", messageData);
+      setMessages((prevMessages) => [...prevMessages, messageData]);
+    });
+
+    // Error handling
+    newSocket.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+    });
+
+    newSocket.on("error", (error) => {
+      console.error("Socket error:", error);
+    });
+
+    setSocket(newSocket);
+    return newSocket;
+  }
   // Socket Connection
   useEffect(() => {
-    // Ensure port is set and valid
-    
       // Create socket connection
-      const newSocket = io("https://chat-app-test-pydh.onrender.com", {
-        transports: ["websocket"],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-      });
-
-      // Debug connection events
-      newSocket.on("connect", () => {
-        console.log("Socket connected:", newSocket.id);
-      });
-
-      newSocket.on("connection-confirmed", (data) => {
-        console.log("Connection confirmed:", data);
-      });
-
-      newSocket.on("registration-confirmed", (data) => {
-        console.log("Registration confirmed:", data);
-      });
-
-      // Listen for private messages
-      newSocket.on("private-message", (messageData) => {
-        console.log("Received private message:", messageData);
-        setMessages((prevMessages) => [...prevMessages, messageData]);
-      });
-
-      // Error handling
-      newSocket.on("connect_error", (error) => {
-        console.error("Connection error:", error);
-      });
-
-      newSocket.on("error", (error) => {
-        console.error("Socket error:", error);
-      });
-
-      setSocket(newSocket);
-
+      const newSocket = connectSocket();
+      
       // Cleanup on unmount
       return () => {
         newSocket.disconnect();
       };
     
-  }, []); // Dependency on port ensures reconnection if port changes
+  }, []); 
 
   // Register User
   const register = () => {
@@ -105,7 +108,15 @@ const ChatComponent = () => {
             JSON.stringify(savedMessages)
           );
         }
-        alert("setting message to empty");
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            senderId: currentUserId,
+            message: messageInput,
+            status: "offline",
+          },
+        ]);
+  
       } else {
         localStorage.setItem(
           "offlineMessages",
@@ -129,6 +140,8 @@ const ChatComponent = () => {
           senderId: currentUserId,
           recipientId,
           message: messageInput,
+          
+
         });
       } catch (e) {
         alert("User is offline");
@@ -140,6 +153,7 @@ const ChatComponent = () => {
         {
           senderId: currentUserId,
           message: messageInput,
+          status: "sent",
         },
       ]);
 
@@ -152,6 +166,7 @@ const ChatComponent = () => {
       if (!isOnline) {
         let connectionStatus = await checkInternetConnection();
         if (connectionStatus) {
+          connectSocket();
           setIsOnline(true);
           let savedMessages = localStorage.getItem("offlineMessages");
           if (savedMessages) {
@@ -159,7 +174,16 @@ const ChatComponent = () => {
             if (Array.isArray(savedMessages)) {
               savedMessages.forEach((msg) => {
                 sendMessage({ senderId: msg.senderId, message: msg.message });
+              
+                setMessages((prevMessages) =>
+                  prevMessages.map((m) =>
+                    m.senderId === msg.senderId && m.message === msg.message
+                      ? { ...m, status: "sent" }
+                      : m
+                  )
+                );
               });
+              
               localStorage.removeItem("offlineMessages");
             } 
           }
@@ -184,11 +208,7 @@ const ChatComponent = () => {
         value={currentUserId}
         onChange={(e) => setCurrentUserId(e.target.value)}
       />
-      <input
-        placeholder="Port"
-        value={port}
-        onChange={(e) => setPort(e.target.value)}
-      />
+      
 
       <button onClick={register}>Register</button>
       <button
@@ -204,7 +224,8 @@ const ChatComponent = () => {
 
       <div>
         {messages.map((msg, index) => (
-          <div key={index}>
+          <div key={index} style={msg.status === "offline" ? {borderBottom:"1px solid red"} : 
+          {} }>
             {msg.senderId}: {msg.message}
           </div>
         ))}
