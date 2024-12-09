@@ -15,7 +15,7 @@ const ChatComponent = () => {
   
   const [isOnline, setIsOnline] = useState<boolean>(true);
 
-  const connectSocket = () => {
+  const connectSocket = async() => {
     const newSocket =  io("https://chat-app-test-pydh.onrender.com", {
       transports: ["websocket"],
       reconnection: true,
@@ -174,7 +174,8 @@ const ChatComponent = () => {
       if (!isOnline) {
         let connectionStatus = await checkInternetConnection();
         if (connectionStatus) {
-          const Socket =  connectSocket();
+          alert("before connect socket method")
+          const Socket = await connectSocket();
           Socket?.emit("register", currentUserId);
           setIsOnline(true);
           let savedMessages = localStorage.getItem("offlineMessages");
@@ -183,7 +184,11 @@ const ChatComponent = () => {
             if (Array.isArray(savedMessages)) {
               savedMessages.forEach((msg) => {
                 alert("sending messages")
-                sendMessage({ senderId: msg.senderId, message: msg.message });
+                Socket.emit("send-private-message", {
+                  senderId: msg.senderId,
+                  recipientId,
+                  message: msg.message,
+                });
               
                 setMessages((prevMessages) =>
                   prevMessages.map((m) =>
