@@ -90,6 +90,7 @@ const ChatComponent = () => {
     senderId: string;
     message: string;
   }) => {
+    
     const isConnected = await checkInternetConnection();
     if (!isConnected) {
       alert("You are offline");
@@ -129,7 +130,7 @@ const ChatComponent = () => {
         );
       }
       setMessageInput("");
-    } else if (socket && messageInput.trim() && recipientId) {
+    } else if (socket && recipientId) {
       console.log("Sending message:", {
         senderId: currentUserId,
         recipientId,
@@ -173,6 +174,7 @@ const ChatComponent = () => {
             savedMessages = JSON.parse(savedMessages);
             if (Array.isArray(savedMessages)) {
               savedMessages.forEach((msg) => {
+                alert("sending messages")
                 sendMessage({ senderId: msg.senderId, message: msg.message });
               
                 setMessages((prevMessages) =>
