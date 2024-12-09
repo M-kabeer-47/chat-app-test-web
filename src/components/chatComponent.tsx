@@ -22,6 +22,7 @@ const ChatComponent = () => {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
+    console.log("Connecting socket...");
     
     // Debug connection events
     
@@ -95,6 +96,14 @@ const ChatComponent = () => {
     if (!isConnected) {
       alert("You are offline");
       setIsOnline(false);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          senderId: currentUserId,
+          message: messageInput,
+          status: "offline",
+        },
+      ]);
       let savedMessages = localStorage.getItem("offlineMessages");
 
       if (savedMessages) {
@@ -109,14 +118,7 @@ const ChatComponent = () => {
             JSON.stringify(savedMessages)
           );
         }
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            senderId: currentUserId,
-            message: messageInput,
-            status: "offline",
-          },
-        ]);
+        
   
       } else {
         localStorage.setItem(
@@ -182,7 +184,7 @@ const ChatComponent = () => {
                     m.senderId === msg.senderId && m.message === msg.message
                       ? { ...m, status: "sent" }
                       : m
-                  )
+                  ) 
                 );
               });
               
