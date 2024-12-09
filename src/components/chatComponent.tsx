@@ -16,13 +16,13 @@ const ChatComponent = () => {
   const [isOnline, setIsOnline] = useState<boolean>(true);
 
   const connectSocket = () => {
-    const newSocket = io("https://chat-app-test-pydh.onrender.com", {
+    const newSocket =  io("https://chat-app-test-pydh.onrender.com", {
       transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
-    console.log("Connecting socket...");
+    
     
     // Debug connection events
     
@@ -59,11 +59,12 @@ const ChatComponent = () => {
   // Socket Connection
   useEffect(() => {
       // Create socket connection
-      const newSocket = connectSocket();
+
+      connectSocket();
       
       // Cleanup on unmount
       return () => {
-        newSocket.disconnect();
+        socket?.disconnect();
       };
     
   }, []); 
@@ -73,6 +74,10 @@ const ChatComponent = () => {
     if (socket && currentUserId) {
       console.log("Registering user:", currentUserId);
       socket.emit("register", currentUserId);
+    }
+    else{
+      connectSocket()
+      socket?.emit("register", currentUserId);
     }
   };
 
@@ -169,7 +174,8 @@ const ChatComponent = () => {
       if (!isOnline) {
         let connectionStatus = await checkInternetConnection();
         if (connectionStatus) {
-          connectSocket();
+          const Socket =  connectSocket();
+          Socket?.emit("register", currentUserId);
           setIsOnline(true);
           let savedMessages = localStorage.getItem("offlineMessages");
           if (savedMessages) {
